@@ -7,15 +7,16 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Middleware CORS avec validation des prérequis et en-têtes complets
-app.use(cors({
-  origin: 'http://127.0.0.1:5500', // Origine permises (frontend)
+// Middleware CORS avec options spécifiques
+const corsOptions = {
+  origin: 'http://127.0.0.1:5500', // Origine du frontend
   methods: ['GET', 'POST', 'OPTIONS'], // Méthodes HTTP autorisées
   allowedHeaders: ['Content-Type', 'Authorization'], // En-têtes autorisés
-  credentials: true, // Information sur les autorisations de cookies de session
-  optionsSuccessStatus: 204 // Statut de succès pour les requêtes pré-flight
-}));
+  credentials: true, // Autoriser les cookies de session
+  optionsSuccessStatus: 204 // Pour maintenir la compatibilité avec d'anciens navigateurs
+};
 
+app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
 // Connexion à MongoDB
@@ -35,6 +36,18 @@ app.get('/', (req, res) => {
   res.send('Hello World!');
 });
 
+// Middleware personnalisé pour gérer les requêtes préflight (OPTIONS)
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    res.header('Access-Control-Allow-Origin', 'http://127.0.0.1:5500');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    return res.status(204).json({});
+  }
+  next();
+});
+
 // Endpoint pour recevoir les votes
 app.post('/votes', async (req, res) => {
   const { gmName, eastVotes, westVotes } = req.body;
@@ -51,17 +64,6 @@ app.post('/votes', async (req, res) => {
   } catch (error) {
     res.status(500).send({ error: 'Failed to save votes', details: error.message });
   }
-});
-
-// Gérer les requêtes préflight (OPTIONS)
-app.options('/votes', (req, res) => {
-  res.set({
-    'Access-Control-Allow-Origin': 'http://127.0.0.1:5500',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Credentials': 'true'
-  });
-  res.sendStatus(204); // Pas de contenu mais requête acceptée
 });
 
 app.listen(port, () => {

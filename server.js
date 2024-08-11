@@ -7,15 +7,15 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Middleware CORS avec options spécifiques
-const corsOptions = {
-  origin: 'http://127.0.0.1:5500', // Origine de votre frontend
-  methods: ['GET', 'POST'], // Méthodes HTTP autorisées
-  allowedHeaders: ['Content-Type'], // En-têtes autorisés
-  optionsSuccessStatus: 200 // Pour les navigateurs anciens (IE 11 gère mal les 204)
-};
+// Middleware CORS avec validation des prérequis et en-têtes complets
+app.use(cors({
+  origin: 'http://127.0.0.1:5500', // Origine permises (frontend)
+  methods: ['GET', 'POST', 'OPTIONS'], // Méthodes HTTP autorisées
+  allowedHeaders: ['Content-Type', 'Authorization'], // En-têtes autorisés
+  credentials: true, // Information sur les autorisations de cookies de session
+  optionsSuccessStatus: 204 // Statut de succès pour les requêtes pré-flight
+}));
 
-app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
 // Connexion à MongoDB
@@ -53,8 +53,16 @@ app.post('/votes', async (req, res) => {
   }
 });
 
-// Pour gérer les options de pré-vol (preflight)
-app.options('/votes', cors(corsOptions));
+// Gérer les requêtes préflight (OPTIONS)
+app.options('/votes', (req, res) => {
+  res.set({
+    'Access-Control-Allow-Origin': 'http://127.0.0.1:5500',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true'
+  });
+  res.sendStatus(204); // Pas de contenu mais requête acceptée
+});
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);

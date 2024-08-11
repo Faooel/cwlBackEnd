@@ -7,10 +7,12 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Middleware
+// Middleware CORS avec options spécifiques
 const corsOptions = {
-  origin: 'http://127.0.0.1:5500', // Remplacez par l'origine de votre frontend
-  optionsSuccessStatus: 200
+  origin: 'http://127.0.0.1:5500', // Origine de votre frontend
+  methods: ['GET', 'POST'], // Méthodes HTTP autorisées
+  allowedHeaders: ['Content-Type'], // En-têtes autorisés
+  optionsSuccessStatus: 200 // Pour les navigateurs anciens (IE 11 gère mal les 204)
 };
 
 app.use(cors(corsOptions));
@@ -47,9 +49,12 @@ app.post('/votes', async (req, res) => {
     await newVote.save();
     res.status(200).send({ message: 'Votes saved successfully' });
   } catch (error) {
-    res.status(500).send({ error: 'Failed to save votes' });
+    res.status(500).send({ error: 'Failed to save votes', details: error.message });
   }
 });
+
+// Pour gérer les options de pré-vol (preflight)
+app.options('/votes', cors(corsOptions));
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);

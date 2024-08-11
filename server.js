@@ -8,7 +8,12 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
+const corsOptions = {
+  origin: 'http://127.0.0.1:5500', // Remplacez par l'origine de votre frontend
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
 // Connexion à MongoDB

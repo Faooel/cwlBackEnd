@@ -20,14 +20,31 @@ mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTop
     console.error('Error connecting to MongoDB:', error);
   });
 
+// Modèle Mongoose
+const Vote = require('./models/votes');
+
 // Définir un simple endpoint
 app.get('/', (req, res) => {
   res.send('Hello World!');
 });
 
-// Importer les routes si vous en avez
-// const routes = require('./routes');
-// app.use('/api', routes);
+// Endpoint pour recevoir les votes
+app.post('/votes', async (req, res) => {
+  const { gmName, eastVotes, westVotes } = req.body;
+
+  const newVote = new Vote({
+    gmName,
+    eastVotes,
+    westVotes,
+  });
+
+  try {
+    await newVote.save();
+    res.status(200).send({ message: 'Votes saved successfully' });
+  } catch (error) {
+    res.status(500).send({ error: 'Failed to save votes' });
+  }
+});
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
